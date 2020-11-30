@@ -92,8 +92,81 @@ return_type URPositionHardwareInterface::start()
   std::this_thread::sleep_for(std::chrono::seconds(2));
 
   // TODO initialize driver
+  RCLCPP_INFO(rclcpp::get_logger("URPositionHardwareInterface"), "Initializing dashboard client");
+
+  // The robot's IP address.
+  std::string robot_ip_("192.168.0.3");
+  // Path to the urscript code that will be sent to the robot
+  std::string script_filename("script_filename");
+  // Path to the file containing the recipe used for requesting RTDE outputs.
+  std::string output_recipe_filename("output_recipe_filename");
+  // Path to the file containing the recipe used for requesting RTDE inputs.
+  std::string input_recipe_filename("input_recipe_filename");
+  // Start robot in headless mode. This does not require the 'External Control' URCap to be running
+  // on the robot, but this will send the URScript to the robot directly. On e-Series robots this
+  // requires the robot to run in 'remote-control' mode.
+  bool headless_mode = false;
+  // Port that will be opened to communicate between the driver and the robot controller.
+  int reverse_port = 50001;
+  // The driver will offer an interface to receive the program's URScript on this port.
+  int script_sender_port =  50002;
+  std::string tf_prefix_("");
+  // Enables non_blocking_read mode. Should only be used with combined_robot_hw. Disables error generated when read
+  // returns without any data, sets the read timeout to zero, and synchronises read/write operations. Enabling this when
+  // not used with combined_robot_hw can suppress important errors and affect real-time performance.
+  bool non_blocking_read_ = false;
+
+  // Specify gain for servoing to position in joint space.
+  // A higher gain can sharpen the trajectory.
+  int servoj_gain =  2000;
+
+  // Specify lookahead time for servoing to position in joint space.
+  // A longer lookahead time can smooth the trajectory.
+  double servoj_lookahead_time =  0.03;
+
+  // Whenever the runtime state of the "External Control" program node in the UR-program changes, a
+  // message gets published here. So this is equivalent to the information whether the robot accepts
+  // commands from ROS side.
+//  program_state_pub_ = robot_hw_nh.advertise<std_msgs::Bool>("robot_program_running", 10, true);
+
+  bool use_tool_communication = false;
+  std::unique_ptr<urcl::ToolCommSetup> tool_comm_setup;
+  if (use_tool_communication) {
+    tool_comm_setup.reset(new urcl::ToolCommSetup());
+  }
+
+  // Hash of the calibration reported by the robot. This is used for validating the robot
+  // description is using the correct calibration. If the robot's calibration doesn't match this
+  // hash, an error will be printed. You can use the robot as usual, however Cartesian poses of the
+  // endeffector might be inaccurate. See the "ur_calibration" package on help how to generate your
+  // own hash matching your actual robot.
+  std::string calibration_checksum;
+
+  try
+  {
+    ur_driver_.reset(
+            new urcl::UrDriver(robot_ip_, script_filename, output_recipe_filename, input_recipe_filename,
+                               std::bind(&URPositionHardwareInterface::handleRobotProgramState, this, std::placeholders::_1),
+                               headless_mode, std::move(tool_comm_setup), calibration_checksum, (uint32_t)reverse_port,
+                               (uint32_t)script_sender_port, servoj_gain, servoj_lookahead_time, non_blocking_read_));
+  }
+  catch (urcl::ToolCommNotAvailable& e)
+  {
+    RCLCPP_FATAL_STREAM(rclcpp::get_logger("URPositionHardwareInterface"), "ISee parameter use_tool_communication");
+
+    return return_type::ERROR;
+  }
+  catch (urcl::UrException& e)
+  {
+    RCLCPP_FATAL_STREAM(rclcpp::get_logger("URPositionHardwareInterface"), e.what());
+    return return_type::ERROR;
+  }
 
   // TODO initialize dashboard client
+
+  RCLCPP_INFO(rclcpp::get_logger("URPositionHardwareInterface"), "Initializing dashboard client");
+  rclcpp::Node::SharedPtr  dashboard_nh = std::make_shared<rclcpp::Node>("URPositionHardwareInterface", "dashboard" );
+  dashboard_client_ = std::make_unique<DashboardClientROS>(dashboard_nh, robot_ip_);
 
   // set some default values
   // TODO replace with reading current state of the joints
@@ -108,7 +181,7 @@ return_type URPositionHardwareInterface::start()
 
   status_ = hardware_interface::status::STARTED;
 
-  RCLCPP_INFO(rclcpp::get_logger("URPositionHardwareInterface"), "System Sucessfully started!");
+  RCLCPP_INFO(rclcpp::get_logger("URPositionHardwareInterface"), "System successfully started!");
 
   return return_type::OK;
 }
@@ -120,12 +193,14 @@ return_type URPositionHardwareInterface::stop()
   std::this_thread::sleep_for(std::chrono::seconds(2));
 
   // TODO stop/reset driver
+  ur_driver_.reset();
 
   // TODO stop/reset dashboard client
+  dashboard_client_.reset();
 
   status_ = hardware_interface::status::STOPPED;
 
-  RCLCPP_INFO(rclcpp::get_logger("URPositionHardwareInterface"), "System sucessfully stopped!");
+  RCLCPP_INFO(rclcpp::get_logger("URPositionHardwareInterface"), "System successfully stopped!");
 
   return return_type::OK;
 }
