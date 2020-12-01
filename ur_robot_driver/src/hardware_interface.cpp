@@ -45,14 +45,14 @@ hardware_interface::return_type URPositionHardwareInterface::configure(const Har
   states_.resize(info_.joints.size(), std::numeric_limits<double>::quiet_NaN());
 
   // TODO all the checking from HardwareInfo which holds urdf info
-//  for (const hardware_interface::ComponentInfo& joint : info_.joints)
-//  {
-//    if (joint.type.compare("ros2_control_components/PositionJoint") != 0)
-//    {
-//      status_ = status::UNKNOWN;
-//      return return_type::ERROR;
-//    }
-//  }
+  //  for (const hardware_interface::ComponentInfo& joint : info_.joints)
+  //  {
+  //    if (joint.type.compare("ros2_control_components/PositionJoint") != 0)
+  //    {
+  //      status_ = status::UNKNOWN;
+  //      return return_type::ERROR;
+  //    }
+  //  }
 
   // TODO fetch parameters (robot_ip, write&read params, ...), this can also be done in start
 
@@ -109,7 +109,7 @@ return_type URPositionHardwareInterface::start()
   // Port that will be opened to communicate between the driver and the robot controller.
   int reverse_port = 50001;
   // The driver will offer an interface to receive the program's URScript on this port.
-  int script_sender_port =  50002;
+  int script_sender_port = 50002;
   std::string tf_prefix_("");
   // Enables non_blocking_read mode. Should only be used with combined_robot_hw. Disables error generated when read
   // returns without any data, sets the read timeout to zero, and synchronises read/write operations. Enabling this when
@@ -118,21 +118,22 @@ return_type URPositionHardwareInterface::start()
 
   // Specify gain for servoing to position in joint space.
   // A higher gain can sharpen the trajectory.
-  int servoj_gain =  2000;
+  int servoj_gain = 2000;
 
   // Specify lookahead time for servoing to position in joint space.
   // A longer lookahead time can smooth the trajectory.
-  double servoj_lookahead_time =  0.03;
+  double servoj_lookahead_time = 0.03;
 
   // Whenever the runtime state of the "External Control" program node in the UR-program changes, a
   // message gets published here. So this is equivalent to the information whether the robot accepts
   // commands from ROS side.
-//  program_state_pub_ = robot_hw_nh.advertise<std_msgs::Bool>("robot_program_running", 10, true);
+  //  program_state_pub_ = robot_hw_nh.advertise<std_msgs::Bool>("robot_program_running", 10, true);
 
   bool use_tool_communication = false;
   std::unique_ptr<urcl::ToolCommSetup> tool_comm_setup;
-  if (use_tool_communication) {
-    tool_comm_setup.reset(new urcl::ToolCommSetup());
+  if (use_tool_communication)
+  {
+    tool_comm_setup = std::make_unique<urcl::ToolCommSetup>();
   }
 
   // Hash of the calibration reported by the robot. This is used for validating the robot
@@ -144,15 +145,15 @@ return_type URPositionHardwareInterface::start()
 
   try
   {
-    ur_driver_.reset(
-            new urcl::UrDriver(robot_ip_, script_filename, output_recipe_filename, input_recipe_filename,
-                               std::bind(&URPositionHardwareInterface::handleRobotProgramState, this, std::placeholders::_1),
-                               headless_mode, std::move(tool_comm_setup), calibration_checksum, (uint32_t)reverse_port,
-                               (uint32_t)script_sender_port, servoj_gain, servoj_lookahead_time, non_blocking_read_));
+    ur_driver_ = std::make_unique<urcl::UrDriver>(
+        robot_ip_, script_filename, output_recipe_filename, input_recipe_filename,
+        std::bind(&URPositionHardwareInterface::handleRobotProgramState, this, std::placeholders::_1), headless_mode,
+        std::move(tool_comm_setup), calibration_checksum, (uint32_t)reverse_port, (uint32_t)script_sender_port,
+        servoj_gain, servoj_lookahead_time, non_blocking_read_);
   }
   catch (urcl::ToolCommNotAvailable& e)
   {
-    RCLCPP_FATAL_STREAM(rclcpp::get_logger("URPositionHardwareInterface"), "ISee parameter use_tool_communication");
+    RCLCPP_FATAL_STREAM(rclcpp::get_logger("URPositionHardwareInterface"), "See parameter use_tool_communication");
 
     return return_type::ERROR;
   }
@@ -165,7 +166,8 @@ return_type URPositionHardwareInterface::start()
   // TODO initialize dashboard client
 
   RCLCPP_INFO(rclcpp::get_logger("URPositionHardwareInterface"), "Initializing dashboard client");
-  rclcpp::Node::SharedPtr  dashboard_nh = std::make_shared<rclcpp::Node>("URPositionHardwareInterface", "dashboard" );
+  // this node will die so Dashboard Client ROS won't be publishing anything
+  rclcpp::Node::SharedPtr dashboard_nh = std::make_shared<rclcpp::Node>("URPositionHardwareInterface", "dashboard");
   dashboard_client_ = std::make_unique<DashboardClientROS>(dashboard_nh, robot_ip_);
 
   // set some default values
@@ -234,17 +236,16 @@ return_type URPositionHardwareInterface::read()
   // TODO add receiving commands from driver
 
   RCLCPP_INFO(rclcpp::get_logger("URPositionHardwareInterface"), "Reading ...");
-  return return_type::OK;
-
 
   std::unique_ptr<rtde::DataPackage> data_pkg = ur_driver_->getDataPackage();
   if (data_pkg)
   {
     packet_read_ = true;
     readData(data_pkg, "actual_q", urcl_joint_positions_);
+    return return_type::OK;
   }
 
-  return return_type::OK;
+  return return_type::ERROR;
 }
 
 return_type URPositionHardwareInterface::write()
@@ -261,5 +262,13 @@ return_type URPositionHardwareInterface::write()
   packet_read_ = false;
 
   return return_type::OK;
+}
+
+void URPositionHardwareInterface::handleRobotProgramState(bool program_running)
+{
+  if (program_running)
+  {
+    RCLCPP_INFO(rclcpp::get_logger("URPositionHardwareInterface"), "Robot receives commands from ROS side");
+  }
 }
 }  // namespace ur_robot_driver
