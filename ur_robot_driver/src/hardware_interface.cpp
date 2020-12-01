@@ -56,6 +56,14 @@ hardware_interface::return_type URPositionHardwareInterface::configure(const Har
 
   // TODO fetch parameters (robot_ip, write&read params, ...), this can also be done in start
 
+//  urcl_joint_positions_ = {100,200,300,400,500,600};
+    urcl_joint_positions_.at(0) = 100.0;
+    urcl_joint_positions_.at(1) = 200.0;
+    urcl_joint_positions_.at(2) = 300.0;
+    urcl_joint_positions_.at(3) = 400.0;
+    urcl_joint_positions_.at(4) = 500.0;
+    urcl_joint_positions_.at(5) = 600.0;
+
   status_ = status::CONFIGURED;
 
   return return_type::OK;
@@ -242,6 +250,13 @@ return_type URPositionHardwareInterface::read()
   {
     packet_read_ = true;
     readData(data_pkg, "actual_q", urcl_joint_positions_);
+
+    memcpy(&states_[0], &urcl_joint_positions_[0], 6* sizeof(double));
+
+//    for (size_t i=0; i<6;i++) {
+//        RCLCPP_INFO_STREAM(rclcpp::get_logger("URPositionHardwareInterface"), "Joint " << i + 1 << " = " << states_[i]);
+//    }
+
     return return_type::OK;
   }
 
