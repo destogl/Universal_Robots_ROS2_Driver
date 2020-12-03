@@ -264,7 +264,6 @@ return_type URPositionHardwareInterface::read()
     readData(data_pkg, "actual_current", urcl_joint_efforts_);
 
     memcpy(&states_[0], &urcl_joint_positions_[0], 6 * sizeof(double));
-    states_[2] += 1.57;
     memcpy(&velocity_states_[0], &urcl_joint_velocities_[0], 6 * sizeof(double));
     memcpy(&joint_efforts_[0], &urcl_joint_efforts_[0], 6 * sizeof(double));
 
