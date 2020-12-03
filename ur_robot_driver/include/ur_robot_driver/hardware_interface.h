@@ -75,7 +75,7 @@ public:
     return status_;
   }
 
-  std::string getName() const
+  std::string get_name() const
   {
     return info_.name;
   }
@@ -104,9 +104,13 @@ protected:
   HardwareInfo info_;
   status status_;
   std::vector<double> commands_, states_;
+  std::vector<double> velocity_commands_, velocity_states_;
+  std::vector<double> joint_efforts_;
 
   urcl::vector6d_t urcl_position_commands_;
   urcl::vector6d_t urcl_joint_positions_;
+  urcl::vector6d_t urcl_joint_velocities_;
+  urcl::vector6d_t urcl_joint_efforts_;
   bool packet_read_;
 
   std::unique_ptr<urcl::UrDriver> ur_driver_;
