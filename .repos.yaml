@@ -13,16 +13,12 @@ repositories:
     version: foxy-devel
   ros2_control:
     type: git
-    #url: https://github.com/ros-controls/ros2_control.git
-    url: https://github.com/destogl/ros2_control.git
-    #version: master
-    version: tests_with_demo_repos
+    url: https://github.com/ros-controls/ros2_control.git
+    version: master
   ros2_controllers:
     type: git
-    #url: https://github.com/ros-controls/ros2_controllers.git
     url: https://github.com/destogl/ros2_controllers.git
-    #version: master
-    version: a36fca2
+    version: master
   srdfdom:
     type: git
     url: https://github.com/ros-planning/srdfdom.git
