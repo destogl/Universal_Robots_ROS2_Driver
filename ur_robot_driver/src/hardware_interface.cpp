@@ -47,8 +47,8 @@ hardware_interface::return_type URPositionHardwareInterface::configure(const Har
   velocity_states_.resize(info_.joints.size(), std::numeric_limits<double>::quiet_NaN());
   joint_efforts_.resize(info_.joints.size(), std::numeric_limits<double>::quiet_NaN());
 
-  joint_efforts_ = {0,0,0,0,0,0};
-  velocity_states_ = {0,0,0,0,0,0};
+  joint_efforts_ = { 0, 0, 0, 0, 0, 0 };
+  velocity_states_ = { 0, 0, 0, 0, 0, 0 };
 
   // TODO all the checking from HardwareInfo which holds urdf info
   //  for (const hardware_interface::ComponentInfo& joint : info_.joints)
@@ -75,11 +75,11 @@ std::vector<hardware_interface::StateInterface> URPositionHardwareInterface::exp
     state_interfaces.emplace_back(
         hardware_interface::StateInterface(info_.joints[i].name, hardware_interface::HW_IF_POSITION, &states_[i]));
 
-    state_interfaces.emplace_back(
-            hardware_interface::StateInterface(info_.joints[i].name, hardware_interface::HW_IF_VELOCITY, &velocity_states_[i]));
+    state_interfaces.emplace_back(hardware_interface::StateInterface(
+        info_.joints[i].name, hardware_interface::HW_IF_VELOCITY, &velocity_states_[i]));
 
     state_interfaces.emplace_back(
-            hardware_interface::StateInterface(info_.joints[i].name, hardware_interface::HW_IF_EFFORT, &joint_efforts_[i]));
+        hardware_interface::StateInterface(info_.joints[i].name, hardware_interface::HW_IF_EFFORT, &joint_efforts_[i]));
   }
 
   return state_interfaces;
@@ -93,8 +93,8 @@ std::vector<hardware_interface::CommandInterface> URPositionHardwareInterface::e
     command_interfaces.emplace_back(
         hardware_interface::CommandInterface(info_.joints[i].name, hardware_interface::HW_IF_POSITION, &commands_[i]));
 
-    command_interfaces.emplace_back(
-            hardware_interface::CommandInterface(info_.joints[i].name, hardware_interface::HW_IF_VELOCITY, &velocity_commands_[i]));
+    command_interfaces.emplace_back(hardware_interface::CommandInterface(
+        info_.joints[i].name, hardware_interface::HW_IF_VELOCITY, &velocity_commands_[i]));
   }
 
   return command_interfaces;
@@ -183,7 +183,7 @@ return_type URPositionHardwareInterface::start()
   RCLCPP_INFO(rclcpp::get_logger("URPositionHardwareInterface"), "Initializing dashboard client");
   // this node will die so Dashboard Client ROS won't be publishing anything
   rclcpp::Node::SharedPtr dashboard_nh = std::make_shared<rclcpp::Node>("URPositionHardwareInterface", "dashboard");
-//  dashboard_client_ = std::make_unique<DashboardClientROS>(dashboard_nh, robot_ip_);
+  //  dashboard_client_ = std::make_unique<DashboardClientROS>(dashboard_nh, robot_ip_);
 
   // set some default values
   // TODO replace with reading current state of the joints
@@ -260,14 +260,15 @@ return_type URPositionHardwareInterface::read()
     readData(data_pkg, "actual_qd", urcl_joint_velocities_);
     readData(data_pkg, "actual_current", urcl_joint_efforts_);
 
-    memcpy(&states_[0], &urcl_joint_positions_[0], 6* sizeof(double));
+    memcpy(&states_[0], &urcl_joint_positions_[0], 6 * sizeof(double));
     states_[2] += 1.57;
-    memcpy(&velocity_states_[0], &urcl_joint_velocities_[0], 6* sizeof(double));
-    memcpy(&joint_efforts_[0], &urcl_joint_efforts_[0], 6* sizeof(double));
+    memcpy(&velocity_states_[0], &urcl_joint_velocities_[0], 6 * sizeof(double));
+    memcpy(&joint_efforts_[0], &urcl_joint_efforts_[0], 6 * sizeof(double));
 
-//    for (size_t i=0; i<6;i++) {
-//        RCLCPP_INFO_STREAM(rclcpp::get_logger("URPositionHardwareInterface"), "Joint " << i + 1 << " = " << states_[i]);
-//    }
+    //    for (size_t i=0; i<6;i++) {
+    //        RCLCPP_INFO_STREAM(rclcpp::get_logger("URPositionHardwareInterface"), "Joint " << i + 1 << " = " <<
+    //        states_[i]);
+    //    }
 
     return return_type::OK;
   }
