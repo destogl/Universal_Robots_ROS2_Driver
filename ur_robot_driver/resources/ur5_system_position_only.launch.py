@@ -80,5 +80,5 @@ def generate_launch_description():
           'stdout': 'screen',
           'stderr': 'screen',
           },
-        ), rviz_node, robot_state_pub_node
+        )#, rviz_node, robot_state_pub_node
     ])

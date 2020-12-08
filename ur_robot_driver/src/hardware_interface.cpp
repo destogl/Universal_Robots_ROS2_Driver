@@ -40,15 +40,15 @@ hardware_interface::return_type URPositionHardwareInterface::configure(const Har
 {
   info_ = system_info;
 
+  hw_slowdown_ = stod(info_.hardware_parameters["hw_slowdown"]);
+
+
   // resize and initialize
   commands_.resize(info_.joints.size(), std::numeric_limits<double>::quiet_NaN());
   states_.resize(info_.joints.size(), std::numeric_limits<double>::quiet_NaN());
   velocity_commands_.resize(info_.joints.size(), std::numeric_limits<double>::quiet_NaN());
   velocity_states_.resize(info_.joints.size(), std::numeric_limits<double>::quiet_NaN());
   joint_efforts_.resize(info_.joints.size(), std::numeric_limits<double>::quiet_NaN());
-
-  joint_efforts_ = { 0, 0, 0, 0, 0, 0 };
-  velocity_states_ = { 0, 0, 0, 0, 0, 0 };
 
   // TODO all the checking from HardwareInfo which holds urdf info
   //  for (const hardware_interface::ComponentInfo& joint : info_.joints)
@@ -106,9 +106,8 @@ return_type URPositionHardwareInterface::start()
 
   std::this_thread::sleep_for(std::chrono::seconds(2));
 
+  hw_slowdown_ = stod(info_.hardware_parameters["hw_slowdown"]);
 
-  // set some default values
-  // TODO replace with reading current state of the joints
   for (uint i = 0; i < states_.size(); i++)
   {
     if (std::isnan(states_[i]) || std::isnan(commands_[i]))
@@ -141,15 +140,16 @@ return_type URPositionHardwareInterface::stop()
 
 return_type URPositionHardwareInterface::read()
 {
-  // TODO add receiving commands from driver
-
   RCLCPP_INFO(rclcpp::get_logger("URPositionHardwareInterface"), "Reading ...");
 
+  for (uint i = 0; i < states_.size(); i++) {
+    // Simulate RRBot's movement
+    states_[i] = commands_[i] + (states_[i] - commands_[i]) / hw_slowdown_;
 
-
-    memcpy(&states_[0], &urcl_joint_positions_[0], 6 * sizeof(double));
-    memcpy(&velocity_states_[0], &urcl_joint_velocities_[0], 6 * sizeof(double));
-    memcpy(&joint_efforts_[0], &urcl_joint_efforts_[0], 6 * sizeof(double));
+  }
+//    RCLCPP_INFO(
+//            rclcpp::get_logger("RRBotSystemPositionOnlyHardware"),
+//            "Got state %.5f for joint %d!", states_[i], i);}
 
     return return_type::OK;
 
@@ -161,11 +161,14 @@ return_type URPositionHardwareInterface::write()
   RCLCPP_INFO(rclcpp::get_logger("URPositionHardwareInterface"), "Writing ...");
   return return_type::OK;
 
-  for (uint i = 0; i < info_.joints.size(); i++)
-    urcl_position_commands_[i] = commands_[i];
-
-
-  return return_type::OK;
 }
+
+  URPositionHardwareInterface::URPositionHardwareInterface(): SystemInterface() {
+
+      status_ = status::CONFIGURED;
+
+    hw_slowdown_=1.0;
+
+  }
 
 }  // namespace ur_robot_driver

@@ -62,6 +62,8 @@ namespace ur_robot_driver {
     public:
         RCLCPP_SHARED_PTR_DEFINITIONS(URPositionHardwareInterface);
 
+        URPositionHardwareInterface();
+
         return_type configure(const HardwareInfo &system_info) final;
 
         std::vector<hardware_interface::StateInterface> export_state_interfaces() final;
@@ -92,11 +94,7 @@ namespace ur_robot_driver {
         std::vector<double> velocity_commands_, velocity_states_;
         std::vector<double> joint_efforts_;
 
-        urcl::vector6d_t urcl_position_commands_;
-        urcl::vector6d_t urcl_joint_positions_;
-        urcl::vector6d_t urcl_joint_velocities_;
-        urcl::vector6d_t urcl_joint_efforts_;
-
+        double hw_slowdown_;
     };
 }// namespace ur_robot_driver
 
