@@ -6,8 +6,8 @@
     <ros2_control name="${name}" type="system">
       <hardware>
         <plugin>ur_robot_driver/URPositionHardwareInterface</plugin>
-        <param name="ramp_time">20.0</param> <!-- ramp time in seconds defining the joint speed by 180/ramp_time [deg/s] -->
-        <param name="rate">1.0</param> <!-- same rate as in controller_manager:ros__parameters:update_rate: 2  -->
+        <param name="ramp_time">5.0</param> <!-- ramp time in seconds defining the joint speed by 180/ramp_time [deg/s] -->
+        <param name="rate">20.0</param> <!-- same rate as in controller_manager:ros__parameters:update_rate: 2  -->
       </hardware>
       <joint name="shoulder_pan_joint">
         <command_interface name="position">
