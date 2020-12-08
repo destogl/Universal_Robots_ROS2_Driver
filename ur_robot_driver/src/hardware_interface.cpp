@@ -32,6 +32,9 @@
 
 #include "rclcpp/rclcpp.hpp"
 
+#include <algorithm>
+#include <math.h>
+
 namespace rtde = urcl::rtde_interface;
 
 namespace ur_robot_driver
@@ -40,8 +43,8 @@ hardware_interface::return_type URPositionHardwareInterface::configure(const Har
 {
   info_ = system_info;
 
-  hw_slowdown_ = stod(info_.hardware_parameters["hw_slowdown"]);
-
+  ramp_time_ = stod(info_.hardware_parameters["ramp_time"]);
+  rate_ = stod(info_.hardware_parameters["rate"]);
 
   // resize and initialize
   commands_.resize(info_.joints.size(), std::numeric_limits<double>::quiet_NaN());
@@ -106,8 +109,6 @@ return_type URPositionHardwareInterface::start()
 
   std::this_thread::sleep_for(std::chrono::seconds(2));
 
-  hw_slowdown_ = stod(info_.hardware_parameters["hw_slowdown"]);
-
   for (uint i = 0; i < states_.size(); i++)
   {
     if (std::isnan(states_[i]) || std::isnan(commands_[i]))
@@ -144,8 +145,9 @@ return_type URPositionHardwareInterface::read()
 
   for (uint i = 0; i < states_.size(); i++) {
     // Simulate RRBot's movement
-    states_[i] = commands_[i] + (states_[i] - commands_[i]) / hw_slowdown_;
-
+    double diff = commands_[i] - states_[i];
+    double ramp_increment = M_PI/ramp_time_*(1.0/rate_);
+    states_[i] += std::copysign(std::min(std::abs(diff), ramp_increment), diff );
   }
 //    RCLCPP_INFO(
 //            rclcpp::get_logger("RRBotSystemPositionOnlyHardware"),
@@ -166,8 +168,6 @@ return_type URPositionHardwareInterface::write()
   URPositionHardwareInterface::URPositionHardwareInterface(): SystemInterface() {
 
       status_ = status::CONFIGURED;
-
-    hw_slowdown_=1.0;
 
   }
 

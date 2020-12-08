@@ -94,7 +94,8 @@ namespace ur_robot_driver {
         std::vector<double> velocity_commands_, velocity_states_;
         std::vector<double> joint_efforts_;
 
-        double hw_slowdown_;
+        double ramp_time_;
+        double rate_;
     };
 }// namespace ur_robot_driver
 
