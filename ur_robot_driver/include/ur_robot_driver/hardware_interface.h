@@ -52,71 +52,53 @@ using hardware_interface::status;
 using hardware_interface::Actuator;
 using hardware_interface::Sensor;
 
-namespace ur_robot_driver
-{
+namespace ur_robot_driver {
 /*!
  * \brief The HardwareInterface class handles the interface between the ROS system and the main
  * driver. It contains the read and write methods of the main control loop and registers various ROS
  * topics and services.
  */
-class URPositionHardwareInterface : public hardware_interface::SystemInterface
-{
-public:
-  RCLCPP_SHARED_PTR_DEFINITIONS(URPositionHardwareInterface);
+    class URPositionHardwareInterface : public hardware_interface::SystemInterface {
+    public:
+        RCLCPP_SHARED_PTR_DEFINITIONS(URPositionHardwareInterface);
 
-  return_type configure(const HardwareInfo& system_info) final;
+        return_type configure(const HardwareInfo &system_info) final;
 
-  std::vector<hardware_interface::StateInterface> export_state_interfaces() final;
+        std::vector<hardware_interface::StateInterface> export_state_interfaces() final;
 
-  std::vector<hardware_interface::CommandInterface> export_command_interfaces() final;
+        std::vector<hardware_interface::CommandInterface> export_command_interfaces() final;
 
-  status get_status() const final
-  {
-    return status_;
-  }
+        status get_status() const final {
+            return status_;
+        }
 
-  std::string get_name() const
-  {
-    return info_.name;
-  }
+        std::string get_name() const final {
+            return info_.name;
+        }
 
-  return_type start() final;
-  return_type stop() final;
-  return_type read() final;
-  return_type write() final;
+        return_type start() final;
 
-  /*!
-   * \brief Callback to handle a change in the current state of the URCaps program running on the
-   * robot.
-   *
-   * \param program_running The new state of the program
-   */
-  void handleRobotProgramState(bool program_running);
+        return_type stop() final;
 
-protected:
-  template <typename T>
-  void readData(const std::unique_ptr<urcl::rtde_interface::DataPackage>& data_pkg, const std::string& var_name,
-                T& data);
-  template <typename T, size_t N>
-  void readBitsetData(const std::unique_ptr<urcl::rtde_interface::DataPackage>& data_pkg, const std::string& var_name,
-                      std::bitset<N>& data);
+        return_type read() final;
 
-  HardwareInfo info_;
-  status status_;
-  std::vector<double> commands_, states_;
-  std::vector<double> velocity_commands_, velocity_states_;
-  std::vector<double> joint_efforts_;
+        return_type write() final;
 
-  urcl::vector6d_t urcl_position_commands_;
-  urcl::vector6d_t urcl_joint_positions_;
-  urcl::vector6d_t urcl_joint_velocities_;
-  urcl::vector6d_t urcl_joint_efforts_;
-  bool packet_read_;
+    protected:
 
-  std::unique_ptr<urcl::UrDriver> ur_driver_;
-  std::unique_ptr<ur_robot_driver::DashboardClientROS> dashboard_client_;
-};
-}  // namespace ur_robot_driver
+        HardwareInfo info_;
+        status status_;
+        std::vector<double> commands_, states_;
+        std::vector<double> velocity_commands_, velocity_states_;
+        std::vector<double> joint_efforts_;
+
+        urcl::vector6d_t urcl_position_commands_;
+        urcl::vector6d_t urcl_joint_positions_;
+        urcl::vector6d_t urcl_joint_velocities_;
+        urcl::vector6d_t urcl_joint_efforts_;
+
+    };
+}// namespace ur_robot_driver
 
 #include "pluginlib/class_list_macros.hpp"
 
