@@ -11,43 +11,43 @@
       </hardware>
       <joint name="shoulder_pan_joint">
         <command_interface name="position">
-          <param name="min">-1</param>
-          <param name="max">1</param>
+          <param name="min">${-2*pi}</param>
+          <param name="max">${2*pi}</param>
         </command_interface>
         <state_interface name="position"/>
       </joint>
       <joint name="shoulder_lift_joint">
         <command_interface name="position">
-          <param name="min">-1</param>
-          <param name="max">1</param>
+          <param name="min">${-2*pi}</param>
+          <param name="max">${2*pi}</param>
         </command_interface>
         <state_interface name="position"/>
       </joint>
       <joint name="elbow_joint">
         <command_interface name="position">
-         <param name="min">-1</param>
-         <param name="max">1</param>
+          <param name="min">${-pi}</param>
+          <param name="max">${pi}</param>
         </command_interface>
         <state_interface name="position"/>
       </joint>
       <joint name="wrist_1_joint">
         <command_interface name="position">
-         <param name="min">-1</param>
-         <param name="max">1</param>
+          <param name="min">${-2*pi}</param>
+          <param name="max">${2*pi}</param>
         </command_interface>
         <state_interface name="position"/>
       </joint>
       <joint name="wrist_2_joint">
         <command_interface name="position">
-         <param name="min">-1</param>
-         <param name="max">1</param>
+          <param name="min">${-2*pi}</param>
+          <param name="max">${2*pi}</param>
         </command_interface>
         <state_interface name="position"/>
       </joint>
       <joint name="wrist_3_joint">
         <command_interface name="position">
-         <param name="min">-1</param>
-         <param name="max">1</param>
+          <param name="min">${-2*pi}</param>
+          <param name="max">${2*pi}</param>
         </command_interface>
         <state_interface name="position"/>
       </joint>
