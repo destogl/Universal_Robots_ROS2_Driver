@@ -25,7 +25,7 @@ include_directories(include)
 add_library(${PROJECT_NAME} SHARED
   src/scaled_joint_trajectory_controller.cpp
   src/speed_scaling_state_controller.cpp
-)
+        src/force_torque_sensor_controller.cpp include/ur_controllers/force_torque_sensor_controller.h)
 ament_target_dependencies(${PROJECT_NAME}
   ${THIS_PACKAGE_INCLUDE_DEPENDS}
 )
