@@ -93,6 +93,7 @@ namespace ur_robot_driver {
         std::vector<double> commands_, states_;
         std::vector<double> velocity_commands_, velocity_states_;
         std::vector<double> joint_efforts_;
+        std::vector<double> force_torque_;
 
         double ramp_time_;
         double rate_;

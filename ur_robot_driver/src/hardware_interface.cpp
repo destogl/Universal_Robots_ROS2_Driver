@@ -53,6 +53,7 @@ hardware_interface::return_type URPositionHardwareInterface::configure(const Har
   velocity_states_.resize(info_.joints.size(), std::numeric_limits<double>::quiet_NaN());
   joint_efforts_.resize(info_.joints.size(), std::numeric_limits<double>::quiet_NaN());
 
+  force_torque_.resize(info_.sensors[0].state_interfaces.size(), 8.0);
   // TODO all the checking from HardwareInfo which holds urdf info
   //  for (const hardware_interface::ComponentInfo& joint : info_.joints)
   //  {
@@ -70,19 +71,25 @@ hardware_interface::return_type URPositionHardwareInterface::configure(const Har
   return return_type::OK;
 }
 
-std::vector<hardware_interface::StateInterface> URPositionHardwareInterface::export_state_interfaces()
-{
+std::vector<hardware_interface::StateInterface> URPositionHardwareInterface::export_state_interfaces() {
   std::vector<hardware_interface::StateInterface> state_interfaces;
-  for (uint i = 0; i < info_.joints.size(); i++)
-  {
+  for (uint i = 0; i < info_.joints.size(); i++) {
     state_interfaces.emplace_back(
-        hardware_interface::StateInterface(info_.joints[i].name, hardware_interface::HW_IF_POSITION, &states_[i]));
+            hardware_interface::StateInterface(info_.joints[i].name, hardware_interface::HW_IF_POSITION, &states_[i]));
 
     state_interfaces.emplace_back(hardware_interface::StateInterface(
-        info_.joints[i].name, hardware_interface::HW_IF_VELOCITY, &velocity_states_[i]));
+            info_.joints[i].name, hardware_interface::HW_IF_VELOCITY, &velocity_states_[i]));
 
     state_interfaces.emplace_back(
-        hardware_interface::StateInterface(info_.joints[i].name, hardware_interface::HW_IF_EFFORT, &joint_efforts_[i]));
+            hardware_interface::StateInterface(info_.joints[i].name, hardware_interface::HW_IF_EFFORT,
+                                               &joint_efforts_[i]));
+  }
+
+  for (uint i = 0; i < info_.sensors.size(); i++){
+
+    for (uint j = 0; j< info_.sensors[i].state_interfaces.size(); ++j) {
+      state_interfaces.emplace_back(hardware_interface::StateInterface(info_.sensors[i].name, info_.sensors[i].state_interfaces[j].name, &force_torque_[i]));
+    }
   }
 
   return state_interfaces;
