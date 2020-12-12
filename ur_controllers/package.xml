@@ -17,10 +17,9 @@
   <exec_depend>pluginlib</exec_depend>
   <exec_depend>rcutils</exec_depend>
 
-  <depend>control_msgs</depend>
   <depend>controller_interface</depend>
   <depend>rclcpp_lifecycle</depend>
-  <depend>sensor_msgs</depend>
+  <depend>geometry_msgs</depend>
   <depend>joint_trajectory_controller</depend>
   <depend>std_msgs</depend>
   <depend>std_srvs</depend>

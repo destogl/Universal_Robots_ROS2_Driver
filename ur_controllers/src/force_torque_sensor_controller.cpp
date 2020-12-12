@@ -29,6 +29,7 @@ controller_interface::return_type ur_controllers::ForceTorqueStateController::up
   geometry_msgs::msg::Vector3 fVec;
   geometry_msgs::msg::Vector3 tVec;
 
+  // TODO remove these hardcoded names and create better string filtering within state_interfaces_
   for (const auto& state_interface : state_interfaces_)
   {
     if (state_interface.get_name() != "tcp_fts_sensor")
@@ -77,6 +78,7 @@ controller_interface::return_type ur_controllers::ForceTorqueStateController::up
     return controller_interface::return_type::ERROR;
   }
 
+  // TODO set frame_id as parameter --> it includes tf listener within controller
   wrench_state_msg_.header.stamp = lifecycle_node_->get_clock()->now();
   wrench_state_msg_.header.frame_id = "tool0";
 
@@ -95,6 +97,7 @@ ForceTorqueStateController::on_configure(const rclcpp_lifecycle::State& /*previo
 {
   try
   {
+    // TODO make topic name a parameter
     wrench_state_publisher_ =
         lifecycle_node_->create_publisher<geometry_msgs::msg::WrenchStamped>("ft_data", rclcpp::SystemDefaultsQoS());
   }
@@ -146,14 +149,18 @@ bool has_any_key(const std::unordered_map<std::string, T>& map, const std::vecto
 
 bool ForceTorqueStateController::init_sensor_data()
 {
+  bool has_fts_sensor = false;
   // loop in reverse order, this maintains the order of values at retrieval time
   for (auto si = state_interfaces_.crbegin(); si != state_interfaces_.crend(); si++)
   {
+    // TODO remove hardcoded naming
     if (si->get_name() == "tcp_fts_sensor")
     {
+      has_fts_sensor = true;
       axis_val_names_.push_back(si->get_interface_name());
     }
   }
+  return has_fts_sensor;
 }
 
 void ForceTorqueStateController::init_sensor_state_msg()

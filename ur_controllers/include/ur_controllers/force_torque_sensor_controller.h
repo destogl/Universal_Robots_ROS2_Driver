@@ -10,10 +10,9 @@
 #include <unordered_map>
 #include <vector>
 
+#include <controller_interface/controller_interface.hpp>
 #include "rclcpp_lifecycle/lifecycle_publisher.hpp"
 #include "rclcpp_lifecycle/node_interfaces/lifecycle_node_interface.hpp"
-
-#include <controller_interface/controller_interface.hpp>
 
 #include <geometry_msgs/msg/wrench_stamped.hpp>
 
