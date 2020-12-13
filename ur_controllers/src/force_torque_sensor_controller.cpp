@@ -20,7 +20,13 @@ controller_interface::InterfaceConfiguration ForceTorqueStateController::command
 controller_interface::InterfaceConfiguration ForceTorqueStateController::state_interface_configuration() const
 {
   controller_interface::InterfaceConfiguration config;
-  config.type = controller_interface::interface_configuration_type::ALL;
+  config.type = controller_interface::interface_configuration_type::INDIVIDUAL;
+  config.names.emplace_back("tcp_fts_sensor/fx");
+    config.names.emplace_back("tcp_fts_sensor/fy");
+    config.names.emplace_back("tcp_fts_sensor/fz");
+    config.names.emplace_back("tcp_fts_sensor/tx");
+    config.names.emplace_back("tcp_fts_sensor/ty");
+    config.names.emplace_back("tcp_fts_sensor/tz");
   return config;
 }
 
@@ -32,8 +38,6 @@ controller_interface::return_type ur_controllers::ForceTorqueStateController::up
   // TODO remove these hardcoded names and create better string filtering within state_interfaces_
   for (const auto& state_interface : state_interfaces_)
   {
-    if (state_interface.get_name() != "tcp_fts_sensor")
-      continue;
 
     if (state_interface.get_interface_name() == "fx")
     {
