@@ -148,7 +148,7 @@ return_type URPositionHardwareInterface::stop()
 
 return_type URPositionHardwareInterface::read()
 {
-  RCLCPP_INFO(rclcpp::get_logger("URPositionHardwareInterface"), "Reading ...");
+//  RCLCPP_INFO(rclcpp::get_logger("URPositionHardwareInterface"), "Reading ...");
 
   for (uint i = 0; i < states_.size(); i++) {
     // Simulate RRBot's movement
@@ -167,7 +167,7 @@ return_type URPositionHardwareInterface::read()
 return_type URPositionHardwareInterface::write()
 {
   // TODO send commands_ to driver
-  RCLCPP_INFO(rclcpp::get_logger("URPositionHardwareInterface"), "Writing ...");
+//  RCLCPP_INFO(rclcpp::get_logger("URPositionHardwareInterface"), "Writing ...");
   return return_type::OK;
 
 }
