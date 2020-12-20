@@ -36,6 +36,11 @@
 #include <math.h>
 
 namespace rtde = urcl::rtde_interface;
+#include<algorithm>
+std::vector<double>  durations;
+using Clock = std::chrono::high_resolution_clock;
+using TimePoint = std::chrono::time_point<Clock>;
+TimePoint tp;
 
 namespace ur_robot_driver
 {
@@ -129,6 +134,8 @@ return_type URPositionHardwareInterface::start()
 
   RCLCPP_INFO(rclcpp::get_logger("URPositionHardwareInterface"), "System successfully started!");
 
+  tp = std::chrono::high_resolution_clock::now();
+
   return return_type::OK;
 }
 
@@ -148,14 +155,37 @@ return_type URPositionHardwareInterface::stop()
 
 return_type URPositionHardwareInterface::read()
 {
+  using us = std::chrono::milliseconds;
+
+  double dur  = std::chrono::duration_cast<us>(std::chrono::high_resolution_clock::now() - tp).count();
+  durations.push_back(dur);
+    tp = std::chrono::high_resolution_clock::now();
+
+  size_t dur_size = durations.size();
+  if (dur_size == 1000) {
+
+      double average = std::accumulate(durations.begin(), durations.end(), 0.0) / dur_size ;
+      double accum = 0.0;
+      std::for_each (std::begin(durations), std::end(durations), [&](const double d) {
+          accum += (d - average) * (d - average);
+      });
+
+      double stdev = sqrt(accum / (durations.size()-1));
+      RCLCPP_INFO_STREAM(rclcpp::get_logger("URPositionHardwareInterface"), "Avg Period [ms] = " << average);
+      RCLCPP_INFO_STREAM(rclcpp::get_logger("URPositionHardwareInterface"), "Period deviation [ms] = " << stdev);
+
+      durations.clear();
+  }
+
+
 //  RCLCPP_INFO(rclcpp::get_logger("URPositionHardwareInterface"), "Reading ...");
 
-  for (uint i = 0; i < states_.size(); i++) {
-    // Simulate RRBot's movement
-    double diff = commands_[i] - states_[i];
-    double ramp_increment = M_PI/ramp_time_*(1.0/rate_);
-    states_[i] += std::copysign(std::min(std::abs(diff), ramp_increment), diff );
-  }
+//  for (uint i = 0; i < states_.size(); i++) {
+//    // Simulate RRBot's movement
+//    double diff = commands_[i] - states_[i];
+//    double ramp_increment = M_PI/ramp_time_*(1.0/rate_);
+//    states_[i] += std::copysign(std::min(std::abs(diff), ramp_increment), diff );
+//  }
 //    RCLCPP_INFO(
 //            rclcpp::get_logger("RRBotSystemPositionOnlyHardware"),
 //            "Got state %.5f for joint %d!", states_[i], i);}
