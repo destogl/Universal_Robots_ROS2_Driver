@@ -48,7 +48,7 @@ def generate_launch_description():
     robot_description_semantic = {'robot_description_semantic' : robot_description_semantic_config}
 
     # Get parameters for the Servo node
-    servo_yaml = load_yaml('ur_ros2_control_demos', 'config/ur5_simulated_config.yaml')
+    servo_yaml = load_yaml('ur_ros2_control_demos', 'config/ur5_servo_config.yaml')
     servo_params = { 'moveit_servo' : servo_yaml }
 
     # RViz
