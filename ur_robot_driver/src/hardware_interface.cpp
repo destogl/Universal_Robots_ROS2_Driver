@@ -127,8 +127,6 @@ return_type URPositionHardwareInterface::start()
 
   RCLCPP_INFO(rclcpp::get_logger("URPositionHardwareInterface"), "System successfully started!");
 
-  tp = std::chrono::high_resolution_clock::now();
-
   return return_type::OK;
 }
 
@@ -138,9 +136,6 @@ return_type URPositionHardwareInterface::stop()
 
   std::this_thread::sleep_for(std::chrono::seconds(2));
 
-  rw_stop_ = true;
-
-  rw_thread_->join();
   status_ = hardware_interface::status::STOPPED;
 
   RCLCPP_INFO(rclcpp::get_logger("URPositionHardwareInterface"), "System successfully stopped!");
