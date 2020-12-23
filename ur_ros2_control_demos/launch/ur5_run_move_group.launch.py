@@ -30,8 +30,8 @@ def generate_launch_description():
 
     # planning_context
     robot_description_path = os.path.join(
-        get_package_share_directory('ur_robot_driver'),
-        'resources',
+        get_package_share_directory('ur_ros2_control_demos'),
+        'urdf',
         'ur5.urdf.xacro')
     robot_description_config = xacro.process_file(robot_description_path)
     robot_description = {'robot_description': robot_description_config.toxml()}
