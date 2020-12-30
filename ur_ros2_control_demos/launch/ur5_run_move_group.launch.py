@@ -5,6 +5,7 @@ from launch_ros.actions import Node
 from ament_index_python.packages import get_package_share_directory
 import xacro
 
+
 def load_file(package_name, file_path):
     package_path = get_package_share_directory(package_name)
     absolute_file_path = os.path.join(package_path, file_path)
@@ -14,6 +15,7 @@ def load_file(package_name, file_path):
             return file.read()
     except EnvironmentError: # parent of IOError, OSError *and* WindowsError where available
         return None
+
 
 def load_yaml(package_name, file_path):
     package_path = get_package_share_directory(package_name)
@@ -33,7 +35,29 @@ def generate_launch_description():
         get_package_share_directory('ur_ros2_control_demos'),
         'urdf',
         'ur5.urdf.xacro')
-    robot_description_config = xacro.process_file(robot_description_path)
+
+    script_filename = os.path.join(
+        get_package_share_directory('ur_robot_driver'),
+        'resources',
+        'ros_control.urscript')
+
+    input_recipe_filename = os.path.join(
+        get_package_share_directory('ur_robot_driver'),
+        'resources',
+        'rtde_output_recipe.txt')
+
+    output_recipe_filename = os.path.join(
+        get_package_share_directory('ur_robot_driver'),
+        'resources',
+        'rtde_input_recipe.txt')
+
+    robot_description_config = xacro.process_file(robot_description_path,
+                                                  mappings={'script_filename': script_filename,
+                                                            'input_recipe_filename': input_recipe_filename,
+                                                            'output_recipe_filename': output_recipe_filename,
+                                                            'robot_ip': '10.0.1.186'}
+                                                   )
+
     robot_description = {'robot_description': robot_description_config.toxml()}
 
     robot_description_semantic_config = load_file('ur5_moveit_config', 'config/ur5.srdf')

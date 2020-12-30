@@ -1,6 +1,11 @@
 <?xml version="1.0"?>
 <robot name="ur5" xmlns:xacro="http://wiki.ros.org/xacro">
 
+  <xacro:arg name="script_filename" default="$(find ur_robot_driver)/resources/ros_control.urscript"/>
+  <xacro:arg name="output_recipe_filename" default="$(find ur_robot_driver)/resources/rtde_output_recipe.txt"/>
+  <xacro:arg name="input_recipe_filename" default="$(find ur_robot_driver)/resources/rtde_input_recipe.txt"/>
+  <xacro:arg name="robot_ip" default="10.0.1.186"/>
+
   <link name="base_link" >
     <visual>
       <geometry>
@@ -204,6 +209,12 @@
 
  <!-- Import ur5 ros2_control description -->
  <xacro:include filename="ur5_system_position_only.ros2_control.xacro" />
- <xacro:ur5_system_position_only name="URPositionHardwareInterface" prefix="" />
+ <xacro:ur5_system_position_only name="URPositionHardwareInterface" prefix=""
+                                 script_filename="$(arg script_filename)"
+                                 output_recipe_filename="$(arg output_recipe_filename)"
+                                 input_recipe_filename="$(arg input_recipe_filename)"
+                                 tf_prefix=""
+                                 hash_kinematics=""
+                                 robot_ip="$(arg robot_ip)" />
 
 </robot>
