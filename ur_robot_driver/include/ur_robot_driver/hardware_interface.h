@@ -140,6 +140,9 @@ protected:
   bool robot_program_running_;
   bool non_blocking_read_;
 
+  double ramp_time_;
+  double rate_;
+
   std::unique_ptr<urcl::UrDriver> ur_driver_;
 };
 }  // namespace ur_robot_driver

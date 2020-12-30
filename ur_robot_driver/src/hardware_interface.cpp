@@ -152,6 +152,9 @@ return_type URPositionHardwareInterface::start()
 
   std::this_thread::sleep_for(std::chrono::seconds(2));
 
+  ramp_time_ = stod(info_.hardware_parameters["ramp_time"]);
+  rate_ = stod(info_.hardware_parameters["rate"]);
+
   // The robot's IP address.
   std::string robot_ip = info_.hardware_parameters["robot_ip"];
   // Path to the urscript code that will be sent to the robot
@@ -192,76 +195,11 @@ return_type URPositionHardwareInterface::start()
   // own hash matching your actual robot.
   std::string calibration_checksum = info_.hardware_parameters["kinematics/hash"];
 
-  std::unique_ptr<urcl::ToolCommSetup> tool_comm_setup;
-  if (use_tool_communication)
-  {
-    tool_comm_setup = std::make_unique<urcl::ToolCommSetup>();
-
-    using ToolVoltageT = std::underlying_type<urcl::ToolVoltage>::type;
-    ToolVoltageT tool_voltage;
-    // Tool voltage that will be set as soon as the UR-Program on the robot is started. Note: This
-    // parameter is only evaluated, when the parameter "use_tool_communication" is set to TRUE.
-    // Then, this parameter is required.}
-    tool_voltage = std::stoi(info_.hardware_parameters["tool_voltage"]);
-
-    tool_comm_setup->setToolVoltage(static_cast<urcl::ToolVoltage>(tool_voltage));
-
-    using ParityT = std::underlying_type<urcl::Parity>::type;
-    ParityT parity;
-    // Parity used for tool communication. Will be set as soon as the UR-Program on the robot is
-    // started. Can be 0 (None), 1 (odd) and 2 (even).
-    //
-    // Note: This parameter is only evaluated, when the parameter "use_tool_communication"
-    // is set to TRUE.  Then, this parameter is required.
-    parity = std::stoi(info_.hardware_parameters["tool_parity"]);
-    tool_comm_setup->setParity(static_cast<urcl::Parity>(parity));
-
-    int baud_rate;
-    // Baud rate used for tool communication. Will be set as soon as the UR-Program on the robot is
-    // started. See UR documentation for valid baud rates.
-    //
-    // Note: This parameter is only evaluated, when the parameter "use_tool_communication"
-    // is set to TRUE.  Then, this parameter is required.
-    baud_rate = std::stoi(info_.hardware_parameters["tool_baud_rate"]);
-    tool_comm_setup->setBaudRate(static_cast<uint32_t>(baud_rate));
-
-    int stop_bits;
-    // Number of stop bits used for tool communication. Will be set as soon as the UR-Program on the robot is
-    // started. Can be 1 or 2.
-    //
-    // Note: This parameter is only evaluated, when the parameter "use_tool_communication"
-    // is set to TRUE.  Then, this parameter is required.
-    stop_bits = std::stoi(info_.hardware_parameters["tool_stop_bits"]);
-    tool_comm_setup->setStopBits(static_cast<uint32_t>(stop_bits));
-
-    int rx_idle_chars;
-    // Number of idle chars for the RX unit used for tool communication. Will be set as soon as the UR-Program on the
-    // robot is started. Valid values: min=1.0, max=40.0
-    //
-    // Note: This parameter is only evaluated, when the parameter "use_tool_communication"
-    // is set to TRUE.  Then, this parameter is required.
-    rx_idle_chars = std::stoi(info_.hardware_parameters["tool_rx_idle_chars"]);
-    tool_comm_setup->setRxIdleChars(rx_idle_chars);
-
-    int tx_idle_chars;
-    // Number of idle chars for the TX unit used for tool communication. Will be set as soon as the UR-Program on the
-    // robot is started. Valid values: min=0.0, max=40.0
-    //
-    // Note: This parameter is only evaluated, when the parameter "use_tool_communication"
-    // is set to TRUE.  Then, this parameter is required.
-    tx_idle_chars = std::stoi(info_.hardware_parameters["tool_tx_idle_chars"]);
-    tool_comm_setup->setTxIdleChars(tx_idle_chars);
-  }
-
   RCLCPP_INFO(rclcpp::get_logger("URPositionHardwareInterface"), "Initializing driver...");
 
   try
   {
-    ur_driver_ = std::make_unique<urcl::UrDriver>(
-        robot_ip, script_filename, output_recipe_filename, input_recipe_filename,
-        std::bind(&URPositionHardwareInterface::handleRobotProgramState, this, std::placeholders::_1), headless_mode,
-        std::move(tool_comm_setup), calibration_checksum, (uint32_t)reverse_port, (uint32_t)script_sender_port,
-        servoj_gain, servoj_lookahead_time, non_blocking_read_);
+    {}
   }
   catch (urcl::ToolCommNotAvailable& e)
   {
@@ -275,8 +213,6 @@ return_type URPositionHardwareInterface::start()
     return return_type::ERROR;
   }
 
-  ur_driver_->startRTDECommunication();
-
   status_ = hardware_interface::status::STARTED;
 
   RCLCPP_INFO(rclcpp::get_logger("URPositionHardwareInterface"), "System successfully started!");
@@ -289,8 +225,6 @@ return_type URPositionHardwareInterface::stop()
   RCLCPP_INFO(rclcpp::get_logger("URPositionHardwareInterface"), "Stopping ...please wait...");
 
   std::this_thread::sleep_for(std::chrono::seconds(2));
-
-  ur_driver_.reset();
 
   status_ = hardware_interface::status::STOPPED;
 
@@ -325,56 +259,19 @@ void URPositionHardwareInterface::readBitsetData(const std::unique_ptr<rtde::Dat
 
 return_type URPositionHardwareInterface::read()
 {
-  RCLCPP_INFO(rclcpp::get_logger("URPositionHardwareInterface"), "Reading ...");
 
-  std::unique_ptr<rtde::DataPackage> data_pkg = ur_driver_->getDataPackage();
-
-  if (data_pkg)
-  {
-    packet_read_ = true;
-    readData(data_pkg, "actual_q", urcl_joint_positions_);
-    readData(data_pkg, "actual_qd", urcl_joint_velocities_);
-    readData(data_pkg, "actual_current", urcl_joint_efforts_);
-
-    readData(data_pkg, "target_speed_fraction", target_speed_fraction_);
-    readData(data_pkg, "speed_scaling", speed_scaling_);
-    readData(data_pkg, "runtime_state", runtime_state_);
-    readData(data_pkg, "actual_TCP_force", urcl_ft_sensor_measurements_);
-    readData(data_pkg, "actual_TCP_pose", urcl_tcp_pose_);
-    readData(data_pkg, "standard_analog_input0", standard_analog_input_[0]);
-    readData(data_pkg, "standard_analog_input1", standard_analog_input_[1]);
-    readData(data_pkg, "standard_analog_output0", standard_analog_output_[0]);
-    readData(data_pkg, "standard_analog_output1", standard_analog_output_[1]);
-    readData(data_pkg, "tool_mode", tool_mode_);
-    readData(data_pkg, "tool_analog_input0", tool_analog_input_[0]);
-    readData(data_pkg, "tool_analog_input1", tool_analog_input_[1]);
-    readData(data_pkg, "tool_output_voltage", tool_output_voltage_);
-    readData(data_pkg, "tool_output_current", tool_output_current_);
-    readData(data_pkg, "tool_temperature", tool_temperature_);
-    readData(data_pkg, "robot_mode", robot_mode_);
-    readData(data_pkg, "safety_mode", safety_mode_);
-    readBitsetData<uint32_t>(data_pkg, "robot_status_bits", robot_status_bits_);
-    readBitsetData<uint32_t>(data_pkg, "safety_status_bits", safety_status_bits_);
-    readBitsetData<uint64_t>(data_pkg, "actual_digital_input_bits", actual_dig_in_bits_);
-    readBitsetData<uint64_t>(data_pkg, "actual_digital_output_bits", actual_dig_out_bits_);
-    readBitsetData<uint32_t>(data_pkg, "analog_io_types", analog_io_types_);
-    readBitsetData<uint32_t>(data_pkg, "tool_analog_input_types", tool_analog_input_types_);
-
-    // TODO logic for sending other stuff to higher level interface
-
-    return return_type::OK;
+  for (uint i = 0; i < urcl_position_commands_.size(); i++) {
+    // Simulate RRBot's movement
+    double diff = urcl_position_commands_[i] - urcl_joint_positions_[i];
+    double ramp_increment = M_PI/ramp_time_*(1.0/rate_);
+    urcl_joint_positions_[i] += std::copysign(std::min(std::abs(diff), ramp_increment), diff );
   }
+  return return_type::OK;
 
-  return return_type::ERROR;
 }
 
 return_type URPositionHardwareInterface::write()
 {
-  if ((runtime_state_ == static_cast<uint32_t>(rtde::RUNTIME_STATE::PLAYING) ||
-       runtime_state_ == static_cast<uint32_t>(rtde::RUNTIME_STATE::PAUSING)) &&
-      robot_program_running_ && (!non_blocking_read_ || packet_read_))
-  {
-    RCLCPP_INFO(rclcpp::get_logger("URPositionHardwareInterface"), "Writing ...");
 
     // create a lambda substract functor
     std::function<double(double, double)> substractor = [](double a, double b) { return std::abs(a - b); };
@@ -398,15 +295,15 @@ return_type URPositionHardwareInterface::write()
 
     if (pos_diff_sum != 0.0)
     {
-      ur_driver_->writeJointCommand(urcl_position_commands_, urcl::comm::ControlMode::MODE_SERVOJ);
+      {}
     }
     else if (vel_diff_sum != 0.0)
     {
-      ur_driver_->writeJointCommand(urcl_velocity_commands_, urcl::comm::ControlMode::MODE_SPEEDJ);
+      {}
     }
     else
     {
-      ur_driver_->writeKeepalive();
+      {}
     }
 
     packet_read_ = false;
@@ -416,12 +313,7 @@ return_type URPositionHardwareInterface::write()
     urcl_velocity_commands_old_ = urcl_velocity_commands_;
 
     return return_type::OK;
-  }
-  else
-  {
-    // TODO could not read from the driver --> reset controllers
-    return return_type::ERROR;
-  }
+
 }
 
 void URPositionHardwareInterface::handleRobotProgramState(bool program_running)
