@@ -36,7 +36,7 @@ int main(int argc, char** argv)
     msg->header.stamp = node_ptr->now();
     msg->header.frame_id = "tool0";
     msg->twist.linear.z = -0.08;
-//    msg->twist.angular.z = -0.5;
+    //    msg->twist.angular.z = -0.5;
     pub_ptr->publish(std::move(msg));
   };
   auto timer = node->create_wall_timer(2ms, callback);
