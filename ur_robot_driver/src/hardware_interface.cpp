@@ -34,7 +34,7 @@
 #include "rclcpp/rclcpp.hpp"
 
 namespace rtde = urcl::rtde_interface;
-
+std::string ip, script_fn, input_fn, output_fn;
 namespace ur_robot_driver
 {
 hardware_interface::return_type URPositionHardwareInterface::configure(const HardwareInfo& system_info)
@@ -154,12 +154,16 @@ return_type URPositionHardwareInterface::start()
 
   // The robot's IP address.
   std::string robot_ip = info_.hardware_parameters["robot_ip"];
+  ip = robot_ip;
   // Path to the urscript code that will be sent to the robot
   std::string script_filename = info_.hardware_parameters["script_filename"];
+  script_fn = script_filename;
   // Path to the file containing the recipe used for requesting RTDE outputs.
   std::string output_recipe_filename = info_.hardware_parameters["output_recipe_filename"];
+  output_fn = output_recipe_filename;
   // Path to the file containing the recipe used for requesting RTDE inputs.
   std::string input_recipe_filename = info_.hardware_parameters["input_recipe_filename"];
+  input_fn = input_recipe_filename;
   // Start robot in headless mode. This does not require the 'External Control' URCap to be running
   // on the robot, but this will send the URScript to the robot directly. On e-Series robots this
   // requires the robot to run in 'remote-control' mode.

@@ -46,12 +46,12 @@ def generate_launch_description():
         'resources',
         'ros_control.urscript')
 
-    input_recipe_filename = os.path.join(
+    output_recipe_filename = os.path.join(
         get_package_share_directory('ur_robot_driver'),
         'resources',
         'rtde_output_recipe.txt')
 
-    output_recipe_filename = os.path.join(
+    input_recipe_filename = os.path.join(
         get_package_share_directory('ur_robot_driver'),
         'resources',
         'rtde_input_recipe.txt')
